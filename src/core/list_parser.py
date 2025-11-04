@@ -24,8 +24,9 @@ def parse_list(army_list: str, data_dir: str | None = None) -> List:
     parser.load_army_of_renown(list_dict["army_of_renown"])
     faction = parser.get_faction()
 
-    battle_formation = (list_dict["battle_formation"], faction.battle_formations[list_dict["battle_formation"]]) if faction.battle_formations and list_dict["battle_formation"] else None
-    enhancements = get_enhancement_unit_dict(list_dict["units"])
+    battle_formation = (list_dict["battle_formation"], faction.battle_formations[list_dict["battle_formation"]]) \
+        if faction.battle_formations and list_dict["battle_formation"] else None
+    enhancements = get_enhancement_unit_dict(list_dict["units"], faction)
 
     lores_in_list = {_get_lore_name_without_ident(lore): lore for lore in list_dict["lores"]}
     lores_in_faction = {_get_lore_name_without_ident(lore): lore for lore in faction.lores_available}
@@ -73,24 +74,35 @@ def get_unit_objects(units: list[str], faction: Faction, sep: str = " & ") -> li
     return unit_objs
 
 
-def get_enhancement_unit_dict(units_with_enhancements: list[str], sep: str = " & ") -> dict[str, list[str]]:
+def get_enhancement_unit_dict(units_with_enhancements: list[str], faction: Faction, sep: str = " & ") -> dict[str, list]:
     """
     Extracts which unit has which enhancement from a list of unit names with enhancement names
     :param units_with_enhancements: list of unit names with enhancements, separated by sep.
+    :param faction: faction object containing the ability objects representing the enhancements.
     :param sep: the separator between the unit names (Optional, defaults to " & ").
-    :return: dict with unit names as keys and lists of enhancement names as values.
+    :return: dict with unit names as keys and lists of enhancement abilities as values.
     """
     unit_enhancement_dict = {}
 
     for unit_enhancement_str in units_with_enhancements:
         unit_enhancement_list = unit_enhancement_str.split(sep)
         unit = unit_enhancement_list[0]
-        enhancements = unit_enhancement_list[1:]
-
-        if not enhancements:
+        enhancement_names = unit_enhancement_list[1:]
+        print(enhancement_names)
+        if not enhancement_names:
             continue
 
+        enhancements = []
+        for enhancement in enhancement_names:
+            for _, abilities in faction.enhancements_available.items():
+                enhancements.extend(list(filter(
+                    lambda a: a.name == enhancement,
+                    abilities
+                )))
+
         unit_enhancement_dict[unit] = enhancements
+
+    print(unit_enhancement_dict)
 
     return unit_enhancement_dict
 
@@ -194,7 +206,7 @@ def _remove_redundant_fields(text: str) -> str:
         "Auxiliaries",
         "Wounds",
         "----",
-        "Orruk Warclans" # Temp fix as they are the only faction with split battletome
+        "Orruk Warclans"  # Temp fix as they are the only faction with split battletome
     ]
 
     lines = [l.strip() for l in text.splitlines() if l.strip()]
