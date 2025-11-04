@@ -111,6 +111,7 @@ def get_list_as_dict(army_list: str) -> dict[str, list[str] | str | None]:
     :param army_list: the text of the army list.
     :return: dict containing the respective fields in format {name: str, faction: str, army_of_renown: str | None, battle_formation: str, lores: list[str], battle_tactics: list[str], units: list[str]}.
     """
+    soggy_ident = "Scourge of Ghyran"
     aor_ident = "Army of Renown"
     aor_splitter = " - "
     lore_ident = "Lore "
@@ -161,11 +162,25 @@ def get_list_as_dict(army_list: str) -> dict[str, list[str] | str | None]:
             if lore_name != "":
                 list_dict["lores"].append(lore_name)
         else:
+            if line.startswith(soggy_ident):
+
+                list_dict["units"].append(remove_points(correct_alternate_warscroll_name(line, soggy_ident).strip()))
             list_dict["units"].append(remove_points(line.strip()))
 
     logger.debug("Finished parsing list %s to dictionary %s", list_dict["name"], str(list_dict))
 
     return list_dict
+
+
+def correct_alternate_warscroll_name(text: str, ident: str) -> str:
+    """
+    Changes text in from *Alternate Warscroll Identifier Unit* to *Unit (Alternate Warscroll Identifier)*.
+    :param text: the unit name to correct
+    :param ident: the alternate warscroll identifier
+    :return: corrected unit name
+    """
+    corrected = text.replace(ident, "").strip()
+    return f"{corrected} ({ident})"
 
 
 def remove_points(text: str) -> str:
