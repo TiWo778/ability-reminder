@@ -88,7 +88,7 @@ def get_enhancement_unit_dict(units_with_enhancements: list[str], faction: Facti
         unit_enhancement_list = unit_enhancement_str.split(sep)
         unit = unit_enhancement_list[0]
         enhancement_names = unit_enhancement_list[1:]
-        print(enhancement_names)
+
         if not enhancement_names:
             continue
 
@@ -101,8 +101,6 @@ def get_enhancement_unit_dict(units_with_enhancements: list[str], faction: Facti
                 )))
 
         unit_enhancement_dict[unit] = enhancements
-
-    print(unit_enhancement_dict)
 
     return unit_enhancement_dict
 
@@ -177,7 +175,7 @@ def remove_points(text: str) -> str:
     :return: the unit text without point values
     """
     # Remove parentheses containing point values as well as the optional - present in enhancements that cost points
-    cleaned = re.sub(r"\s*[\(\-][^\)]*[\)]?\s*", " ", text)
+    cleaned = re.sub(r"\s*\(\s*[-+]?\d+\s*\)\s*", " ", text)
 
     # Remove the Points text if it is present
     cleaned = re.sub(r"\s+Points", "", cleaned)

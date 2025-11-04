@@ -292,7 +292,7 @@ def get_units(shared_sel_entries, shared_profiles, ns: dict[str, str]) -> list[U
 
             elif any(s in profile.get("typeName") for s in [unit_identifier, manifestation_identifier]):
                 characteristics = get_characteristics_dict(profile, ns)
-                unit_components["name"] = profile.get("name")
+                unit_components["name"] = entry.get("name")
                 unit_components["move"] = characteristics.get("Move")
                 unit_components["health"] = characteristics.get("Health")
                 unit_components["save"] = characteristics.get("Save")
