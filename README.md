@@ -25,7 +25,7 @@
 
 You can download a packaged release in the releases section.
 
-Alternatively you can clone the repository and run `main.py` it directly or package it yourself using your preferred Python packaging tool.
+Alternatively you can clone the repository and run `main.py` directly or package it yourself using your preferred Python packaging tool.
 
 ### Option 1: Download the Release (Recommended)
 1. Visit the [Releases](../../releases) page.
@@ -33,7 +33,7 @@ Alternatively you can clone the repository and run `main.py` it directly or pack
 3. Run the executable.
 
 ### Option 2: Run from Source
-Make sure you have **Python 3.12** installed.
+Make sure you have **Python 3.12+** installed.
 
 ```
 git clone https://github.com/TiWo778/ability-reminder.git
@@ -41,6 +41,17 @@ cd ability-reminder
 pip install -r requirements.txt
 python main.py
 ````
+
+### Option 3: Package yourself (using Pyinstaller)
+Make sure you are able to run from Source (see above).
+
+```
+cd ability-reminder
+pip install pyinstaller
+pyinstaller --noconsole --onefile --name AbilityReminders --add-data=src/fonts:fonts --add-data=src/app/gui/configs:configs --paths=src main.py
+````
+
+The packaged executable file can then be found at `ability-reminder/dist/AbilityReminders` 
 
 ---
 
