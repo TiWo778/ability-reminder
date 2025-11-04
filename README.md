@@ -3,6 +3,21 @@
 **Ability Reminders** is a Python-based desktop application to help you remember all the abilities of your *Warhammer: Age of Sigmar* army — all dynamically powered by the data hosted on [BSData](https://github.com/BSData).
 
 ---
+## Important:
+
+For v1.0.0, the List has to be formatted as follows:
+<br>
+List name
+<br>
+Faction (and optionally army of Renown)
+<br>
+Battle Formation (or just "Army of Renown" if you are using one)
+<br>
+Lores
+<br>
+Units
+
+---
 
 ## Features
 
