@@ -102,6 +102,7 @@ def get_list_as_dict(army_list: str) -> dict[str, list[str] | str | None]:
     :return: dict containing the respective fields in format {name: str, faction: str, army_of_renown: str | None, battle_formation: str, lores: list[str], battle_tactics: list[str], units: list[str]}.
     """
     aor_ident = "Army of Renown"
+    aor_splitter = " - "
     lore_ident = "Lore "
     tactics_ident = "Battle Tactic Cards"
     tactics_sep = ", "
@@ -120,10 +121,17 @@ def get_list_as_dict(army_list: str) -> dict[str, list[str] | str | None]:
 
     list_dict["name"] = lines[0]
 
-    if aor_ident in lines:
-        list_dict["faction"] = lines[1].split(aor_ident)[0]
-        list_dict["army_of_renown"] = lines[2]#.split(aor_ident)[1]
-        iter_start_idx = 3
+    if aor_splitter in lines[1]:
+        list_dict["faction"] = lines[1].split(aor_splitter)[0]
+        list_dict["army_of_renown"] = lines[1].split(aor_splitter)[1]
+        if aor_ident in lines[2]:
+            iter_start_idx = 3
+        else:
+            iter_start_idx = 2
+    elif aor_ident in lines:
+        list_dict["faction"] = lines[1]
+        list_dict["army_of_renown"] = lines[2]
+        iter_start_idx = 4
     else:
         list_dict["faction"] = lines[1]
 
