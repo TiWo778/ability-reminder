@@ -13,7 +13,7 @@ Path(DEFAULT_BASE_DIR / "logs").mkdir(parents=True, exist_ok=True)
 
 formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 console_handler = logging.StreamHandler()
-console_handler.setLevel(logging.INFO)
+console_handler.setLevel(logging.DEBUG)
 console_handler.setFormatter(formatter)
 
 # File handlers per package

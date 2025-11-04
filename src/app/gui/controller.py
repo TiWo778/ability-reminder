@@ -7,6 +7,10 @@ from src.data_loading.services import DownloadService
 from .widgets.passive_ability_window import PassiveAbilitiesWindow
 from src.core.services import ListService, PDFService, AbilityService
 
+from src.logging_config import get_logger_for_package
+
+logger = get_logger_for_package(__package__.split('.')[-1])
+
 class GUIController:
     """
     Controller for the functionality of the GUI.
@@ -77,6 +81,7 @@ class GUIController:
         try:
             self.list_service.load_from_text(text)
         except Exception as e:
+            logger.error("Encountered an error while submitting the list %s, Error text: %s", text, str(e))
             self.main_window.initial_view.submission_label.setText(f"Error parsing input: {e}")
             return
 
@@ -93,6 +98,7 @@ class GUIController:
             filepath = self.pdf_service.make_pdf()
             self.main_window.initial_view.submission_label.setText(f"Successfully created PDF at: {filepath}")
         except Exception as e:
+            logger.error("Encountered an error while generating a pdf for %s, Error text: %s", self.list_service.get_list(), str(e))
             self.main_window.initial_view.submission_label.setText(f"Error generating PDF: {e}")
             return
 
@@ -139,7 +145,6 @@ class GUIController:
 
         self._update_pdf_dir()
         self.config_reader.set("pdf_dir", self.pdf_dir)
-        print(self.pdf_dir)
         self.main_window.initial_view.submission_label.setText(f"Successfully set PDF folder to: {self.pdf_dir}")
 
     def handle_show_all(self):
@@ -149,6 +154,7 @@ class GUIController:
         try:
             self.phase_abilities_dict = self.ability_service.get_abilities_grouped_by_phases()
         except Exception as e:
+            logger.error("Encountered an error while getting ability data in show_all for %s, Error text: %s", self.list_service.get_list(), str(e))
             self.main_window.initial_view.submission_label.setText(f"Error getting ability data: {e}")
 
         self.update_all_phases_view()
@@ -172,6 +178,7 @@ class GUIController:
             self.game_history = []
             self.priority = "You"
         except Exception as e:
+            logger.error("Encountered an error while getting ability data in start_game for %s, Error text: %s", self.list_service.get_list(), str(e))
             self.main_window.initial_view.submission_label.setText(f"Error getting ability data: {e}")
 
         self.update_game_view()
@@ -371,4 +378,5 @@ class DownloadWorker(QObject):
                 self.download_service.delete_all_files_present()
                 self.finished.emit("Successfully deleted data.")
         except Exception as e:
+            logger.error("Encountered an error while performing a task in DownloadWorker. Task: %s, Error Text: %s", self.mode, str(e))
             self.error.emit(str(e))

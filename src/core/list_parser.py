@@ -24,8 +24,7 @@ def parse_list(army_list: str, data_dir: str | None = None) -> List:
     parser.load_army_of_renown(list_dict["army_of_renown"])
     faction = parser.get_faction()
 
-    battle_formation = (list_dict["battle_formation"],
-                        faction.battle_formations[list_dict["battle_formation"]]) if faction.battle_formations else None
+    battle_formation = (list_dict["battle_formation"], faction.battle_formations[list_dict["battle_formation"]]) if faction.battle_formations and list_dict["battle_formation"] else None
     enhancements = get_enhancement_unit_dict(list_dict["units"])
     lores = {lore: faction.lores_available[lore] for lore in list_dict["lores"]}
     units = get_unit_objects(list_dict["units"], faction)
@@ -93,8 +92,8 @@ def get_list_as_dict(army_list: str) -> dict[str, list[str] | str | None]:
     :return: dict containing the respective fields in format {name: str, faction: str, army_of_renown: str | None, battle_formation: str, lores: list[str], battle_tactics: list[str], units: list[str]}.
     """
     aor_ident = " - "
-    lore_ident = "Lore - "
-    tactics_ident = "Battle Tactic Cards:"
+    lore_ident = "Lore"
+    tactics_ident = "Battle Tactic Cards"
     tactics_sep = ", "
     list_dict = {
         "name": None,
@@ -117,19 +116,25 @@ def get_list_as_dict(army_list: str) -> dict[str, list[str] | str | None]:
     else:
         list_dict["faction"] = lines[1]
 
-    list_dict["battle_formation"] = lines[2]
+    if not lines[2].startswith(tactics_ident) and not lore_ident in lines[2]:
+        list_dict["battle_formation"] = lines[2]
+        iter_start_idx = 3
+    else:
+        iter_start_idx = 2
 
-    for i in range(3, len(lines)):
+    for i in range(iter_start_idx, len(lines)):
         line = lines[i]
 
         if line.startswith(tactics_ident):
-            list_dict["battle_tactics"] = line.replace(tactics_ident, "").strip().split(tactics_sep)
+            list_dict["battle_tactics"] = line.replace(tactics_ident, "").replace(":", "").strip().split(tactics_sep)
         elif lore_ident in line:
-            list_dict["lores"].append(line.split(lore_ident)[1].strip())
+            lore_name = line.replace("-", "").split(lore_ident)[1].strip()
+            if lore_name != "":
+                list_dict["lores"].append(lore_name)
         else:
             list_dict["units"].append(remove_points(line.strip()))
 
-    logger.debug("Finished parsing list %s to dictionary", list_dict["name"])
+    logger.debug("Finished parsing list %s to dictionary %s", list_dict["name"], str(list_dict))
 
     return list_dict
 
@@ -166,7 +171,11 @@ def _remove_redundant_fields(text: str) -> str:
         "App",
         "Created",
         "Data",
-        "Version"
+        "Version",
+        "Auxiliaries",
+        "Wounds",
+        "----",
+        "Orruk Warclans" # Temp fix as they are the only faction with split battletome
     ]
 
     lines = [l.strip() for l in text.splitlines() if l.strip()]
@@ -182,6 +191,7 @@ def _norm_list_text(text: str) -> str:
     :param text: the list text to normalize
     :return: normalized list
     """
+    alt_faction_separator = "|"
     field_separator = "\n"
     insert_after_tokens = ["pts"]
     insert_before_tokens = [
@@ -195,7 +205,7 @@ def _norm_list_text(text: str) -> str:
         "Faction Terrain",
         "Created "]
 
-    normed_text = text
+    normed_text = text.replace(alt_faction_separator, field_separator)
 
     # Insert newlines where missing
     for substring in insert_after_tokens:
