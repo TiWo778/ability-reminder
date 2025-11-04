@@ -26,7 +26,17 @@ def parse_list(army_list: str, data_dir: str | None = None) -> List:
 
     battle_formation = (list_dict["battle_formation"], faction.battle_formations[list_dict["battle_formation"]]) if faction.battle_formations and list_dict["battle_formation"] else None
     enhancements = get_enhancement_unit_dict(list_dict["units"])
-    lores = {lore: faction.lores_available[lore] for lore in list_dict["lores"]}
+
+    lores_in_list = {_get_lore_name_without_ident(lore): lore for lore in list_dict["lores"]}
+    lores_in_faction = {_get_lore_name_without_ident(lore): lore for lore in faction.lores_available}
+
+    # Some Armies of Renown have different names in the official App than the dataset (The Knights of New Summercourt vs New Summercourt)
+    lores = {}
+    for faction_lore_no_ident, lore_name in lores_in_faction.items():
+        for list_lore_no_ident in lores_in_list:
+            if all(word in list_lore_no_ident for word in faction_lore_no_ident.split(" ")):
+                lores[lore_name] = faction.lores_available[lore_name]
+
     units = get_unit_objects(list_dict["units"], faction)
 
     list_obj = List(
@@ -91,8 +101,8 @@ def get_list_as_dict(army_list: str) -> dict[str, list[str] | str | None]:
     :param army_list: the text of the army list.
     :return: dict containing the respective fields in format {name: str, faction: str, army_of_renown: str | None, battle_formation: str, lores: list[str], battle_tactics: list[str], units: list[str]}.
     """
-    aor_ident = " - "
-    lore_ident = "Lore"
+    aor_ident = "Army of Renown"
+    lore_ident = "Lore "
     tactics_ident = "Battle Tactic Cards"
     tactics_sep = ", "
     list_dict = {
@@ -110,17 +120,18 @@ def get_list_as_dict(army_list: str) -> dict[str, list[str] | str | None]:
 
     list_dict["name"] = lines[0]
 
-    if aor_ident in lines[1]:
+    if aor_ident in lines:
         list_dict["faction"] = lines[1].split(aor_ident)[0]
-        list_dict["army_of_renown"] = lines[1].split(aor_ident)[1]
+        list_dict["army_of_renown"] = lines[2]#.split(aor_ident)[1]
+        iter_start_idx = 3
     else:
         list_dict["faction"] = lines[1]
 
-    if not lines[2].startswith(tactics_ident) and not lore_ident in lines[2]:
-        list_dict["battle_formation"] = lines[2]
-        iter_start_idx = 3
-    else:
-        iter_start_idx = 2
+        if not lines[2].startswith(tactics_ident) and not lore_ident in lines[2]:
+            list_dict["battle_formation"] = lines[2]
+            iter_start_idx = 3
+        else:
+            iter_start_idx = 2
 
     for i in range(iter_start_idx, len(lines)):
         line = lines[i]
@@ -128,7 +139,7 @@ def get_list_as_dict(army_list: str) -> dict[str, list[str] | str | None]:
         if line.startswith(tactics_ident):
             list_dict["battle_tactics"] = line.replace(tactics_ident, "").replace(":", "").strip().split(tactics_sep)
         elif lore_ident in line:
-            lore_name = line.replace("-", "").split(lore_ident)[1].strip()
+            lore_name = line.replace("-", "").split(lore_ident, 1)[1].strip()
             if lore_name != "":
                 list_dict["lores"].append(lore_name)
         else:
@@ -222,6 +233,24 @@ def _norm_list_text(text: str) -> str:
     return normed_text
 
 
+def _get_lore_name_without_ident(lore_name: str) -> str:
+    spell_ident = "Spell Lore"
+    prayer_ident = "Prayer Lore"
+    manifestation_ident = "Manifestation Lore"
+    possible_sep = ":"
+
+    if spell_ident in lore_name:
+        new_lore_name = "Spell " + lore_name.replace(spell_ident, "").replace(possible_sep, "").strip()
+    elif prayer_ident in lore_name:
+        new_lore_name = "Prayer " + lore_name.replace(prayer_ident, "").replace(possible_sep, "").strip()
+    elif manifestation_ident in lore_name:
+        new_lore_name = "Manifestation " + lore_name.replace(manifestation_ident, "").replace(possible_sep, "").strip()
+    else:
+        new_lore_name = lore_name.strip()
+
+    return new_lore_name
+
+
 def replace_bullet_points(text: str, sep: str = " & ") -> str:
     """
     Removes bullet points and spaces if present to attach the modifiers of a unit
@@ -262,4 +291,4 @@ def insert_before(text: str, substring: str, to_insert: str) -> str:
     pattern = rf"\s*{re.escape(substring)}"
     replacement = f"{to_insert}{substring}"
 
-    return re.sub(pattern, replacement, text)
+    return re.sub(pattern, replacement, text, count=1)

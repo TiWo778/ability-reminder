@@ -82,7 +82,7 @@ class GUIController:
             self.list_service.load_from_text(text)
         except Exception as e:
             logger.error("Encountered an error while submitting the list %s, Error text: %s", text, str(e))
-            self.main_window.initial_view.submission_label.setText(f"Error parsing input: {e}")
+            self.main_window.initial_view.submission_label.setText(f"Error parsing input, please see the troubleshooting section in README ({e})")
             return
 
         self.main_window.initial_view.submission_label.setText("Submission successful")
@@ -99,7 +99,7 @@ class GUIController:
             self.main_window.initial_view.submission_label.setText(f"Successfully created PDF at: {filepath}")
         except Exception as e:
             logger.error("Encountered an error while generating a pdf for %s, Error text: %s", self.list_service.get_list(), str(e))
-            self.main_window.initial_view.submission_label.setText(f"Error generating PDF: {e}")
+            self.main_window.initial_view.submission_label.setText(f"Error generating PDF, please see the troubleshooting section in README ({e})")
             return
 
     def handle_download(self):

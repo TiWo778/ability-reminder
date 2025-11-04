@@ -29,8 +29,22 @@ def read_file(faction_name: str, aor_name: str | None=None, data_path: str | Pat
     if (not faction_file.is_file()
             or not unit_file.is_file()
             or not spells_file.is_file()
-            or (aor_name is not None and not aor_file.is_file())):
+            or ()):
         file_missing = True
+
+    # Some Armies of Renown have different names in the official App than the dataset (The Knights of New Summercourt vs New Summercourt)
+    if aor_name is not None and not aor_file.is_file():
+        found_aor_file = False
+        for file in Path(data_path).iterdir():
+            if file.is_file():
+                alt_aor_file_ident = file.name.split(".")[0].split(SEPARATOR)[-1].strip()
+                if not alt_aor_file_ident in aor_name:
+                    continue
+                else:
+                    aor_file = file if aor_name else None
+                    found_aor_file = True
+
+        file_missing = not found_aor_file
 
     if file_missing:
         logger.debug("Found missing files for %s - %s missing", faction_name, aor_name)
