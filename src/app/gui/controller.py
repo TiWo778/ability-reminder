@@ -156,6 +156,7 @@ class GUIController:
         except Exception as e:
             logger.error("Encountered an error while getting ability data in show_all for %s, Error text: %s", self.list_service.get_list(), str(e))
             self.main_window.initial_view.submission_label.setText(f"Error getting ability data: {e}")
+            return
 
         self.update_all_phases_view()
         self.main_window.setCurrentWidget(self.main_window.all_phases_view)
@@ -180,6 +181,7 @@ class GUIController:
         except Exception as e:
             logger.error("Encountered an error while getting ability data in start_game for %s, Error text: %s", self.list_service.get_list(), str(e))
             self.main_window.initial_view.submission_label.setText(f"Error getting ability data: {e}")
+            return
 
         self.update_game_view()
         self.main_window.setCurrentWidget(self.main_window.game_view)

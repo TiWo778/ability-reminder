@@ -1,5 +1,6 @@
 from pathlib import Path
 from lxml import etree
+from anyascii import anyascii
 
 from .github_downloader import download_files_for_faction
 from .constants import SEPARATOR, DATA_FILE_EXTENSION, UNIT_FILE_TOKEN, POSSIBLE_ENHANCEMENT_TYPES, POSSIBLE_LORE_TYPES, GENERAL_MANIFESTATION_LORES
@@ -172,7 +173,7 @@ def get_battle_formations(shared_sel_entry_groups, ns: dict[str, str]) -> dict[s
     battle_formations = {}
     formations = battle_formation_entry.find("bs:selectionEntries", namespaces=ns)
     for formation in formations:
-        formation_name = formation.get("name")
+        formation_name = non_safe_ascii_parsing(formation.get("name"))
         profile = formation.find("bs:profiles", namespaces=ns)[0]
         battle_formations[formation_name] = build_ability_from_profile(profile, ns)
 
@@ -199,7 +200,7 @@ def get_enhancements(shared_sel_entry_groups, ns: dict[str, str]) -> dict[str, l
         groups = enhancement_type.findall(".//bs:selectionEntryGroups/bs:selectionEntryGroup", namespaces=ns)
 
         for group in groups:
-            group_name = group.get("name")
+            group_name = non_safe_ascii_parsing(group.get("name"))
             enhancements[group_name] = []
             profiles = group.findall(".//bs:selectionEntries/bs:selectionEntry/bs:profiles/bs:profile", namespaces=ns)
 
@@ -225,7 +226,7 @@ def get_lores(shared_sel_entry_groups, spells_shared_sel_entry_groups, ns: dict[
 
     # Find available lores in faction file and add universal ones
     lores = {
-        lore.get("name"): []
+        non_safe_ascii_parsing(lore.get("name")): []
         for lore_type in lore_entry_groups
         for lore in lore_type.findall(".//bs:selectionEntries/bs:selectionEntry", namespaces=ns)
     }
@@ -279,7 +280,7 @@ def get_units(shared_sel_entries, shared_profiles, ns: dict[str, str]) -> list[U
     ability_identifier = "Ability"
 
     for entry in shared_sel_entries:
-        unit_keywords = keyword_separator.join([link.get("name") for link in entry.find("bs:categoryLinks", namespaces=ns)])
+        unit_keywords = keyword_separator.join([non_safe_ascii_parsing(link.get("name")) for link in entry.find("bs:categoryLinks", namespaces=ns)])
         profiles = entry.findall("bs:profiles/bs:profile", namespaces=ns)
 
         # Store parts of a unit in a dict for later object creation
@@ -287,17 +288,17 @@ def get_units(shared_sel_entries, shared_profiles, ns: dict[str, str]) -> list[U
         # Get information about unit characteristics and abilities
         for profile in profiles:
 
-            if ability_identifier in profile.get("typeName"):
+            if ability_identifier in non_safe_ascii_parsing(profile.get("typeName")):
                 unit_components["abilities"].append(build_ability_from_profile(profile, ns))
 
-            elif any(s in profile.get("typeName") for s in [unit_identifier, manifestation_identifier]):
+            elif any(s in non_safe_ascii_parsing(profile.get("typeName")) for s in [unit_identifier, manifestation_identifier]):
                 characteristics = get_characteristics_dict(profile, ns)
-                unit_components["name"] = entry.get("name")
-                unit_components["move"] = characteristics.get("Move")
-                unit_components["health"] = characteristics.get("Health")
-                unit_components["save"] = characteristics.get("Save")
-                unit_components["control"] = characteristics.get("Control")
-                unit_components["banishment"] = characteristics.get("Banishment")
+                unit_components["name"] = non_safe_ascii_parsing(entry.get("name"))
+                unit_components["move"] = non_safe_ascii_parsing(characteristics.get("Move"))
+                unit_components["health"] = non_safe_ascii_parsing(characteristics.get("Health"))
+                unit_components["save"] = non_safe_ascii_parsing(characteristics.get("Save"))
+                unit_components["control"] = non_safe_ascii_parsing(characteristics.get("Control"))
+                unit_components["banishment"] = non_safe_ascii_parsing(characteristics.get("Banishment"))
 
             else:
                 continue
@@ -359,15 +360,15 @@ def get_weapon_profiles(unit_entry, ns: dict[str, str]) -> tuple[list[Weapon], l
                 weapon_profile = weapon.find("bs:profiles/bs:profile", namespaces=ns)
                 characteristics = get_characteristics_dict(weapon_profile, ns)
                 weapons.append(Weapon(
-                    weapon_profile.get("name"),
-                    weapon_profile.get("typeName"),
-                    characteristics.get("Rng"),
-                    characteristics.get("Atk"),
-                    characteristics.get("Hit"),
-                    characteristics.get("Wnd"),
-                    characteristics.get("Rnd"),
-                    characteristics.get("Dmg"),
-                    characteristics.get("Ability"),
+                    non_safe_ascii_parsing(weapon_profile.get("name")),
+                    non_safe_ascii_parsing(weapon_profile.get("typeName")),
+                    non_safe_ascii_parsing(characteristics.get("Rng")),
+                    non_safe_ascii_parsing(characteristics.get("Atk")),
+                    non_safe_ascii_parsing(characteristics.get("Hit")),
+                    non_safe_ascii_parsing(characteristics.get("Wnd")),
+                    non_safe_ascii_parsing(characteristics.get("Rnd")),
+                    non_safe_ascii_parsing(characteristics.get("Dmg")),
+                    non_safe_ascii_parsing(characteristics.get("Ability")),
                 ))
 
     # Remove duplicates
@@ -386,12 +387,12 @@ def get_characteristics_dict(profile_element, namespace):
         "./bs:characteristics/bs:characteristic",
         namespaces=namespace
     )
-    return {c.get("name"): c.text for c in chars}
+    return {non_safe_ascii_parsing(c.get("name")): c.text for c in chars}
 
 
 def build_ability_from_profile(profile, ns: dict[str, str], cost_key=None) -> Ability:
     """
-    Build an Ability object from a profile
+    Build an Ability object from a profile, ensuring only ascii symbols are included.
     :param profile: the profile from which to build the ability
     :param ns: the namespace to use
     :param cost_key: they key to use for the cost field (None to find it automatically)
@@ -401,13 +402,13 @@ def build_ability_from_profile(profile, ns: dict[str, str], cost_key=None) -> Ab
     if cost_key is None:
         cost_key = get_cost_key(characteristics)
     return Ability(
-        profile.get("name"),
-        profile.get("typeName"),
-        characteristics.get("Timing"),
-        characteristics.get("Keywords"),
-        characteristics.get("Declare"),
-        characteristics.get("Effect"),
-        characteristics.get(cost_key)
+        non_safe_ascii_parsing(profile.get("name")),
+        non_safe_ascii_parsing(profile.get("typeName")),
+        non_safe_ascii_parsing(characteristics.get("Timing")),
+        non_safe_ascii_parsing(characteristics.get("Keywords")),
+        non_safe_ascii_parsing(characteristics.get("Declare")),
+        non_safe_ascii_parsing(characteristics.get("Effect")),
+        non_safe_ascii_parsing(characteristics.get(cost_key))
     )
 
 
@@ -423,3 +424,15 @@ def get_cost_key(characteristics: dict[str,str]) -> str:
     cost_key = next(iter(found_cost_candidates)) if found_cost_candidates else None
 
     return cost_key
+
+
+def non_safe_ascii_parsing(text: str | None):
+    """
+    Parses a Unicode string to ASCII using anyascii.anyascii and handles None inputs
+    :param text: The text to parse
+    :return: parsed text or None if None was given
+    """
+    if text is None:
+        return None
+
+    return anyascii(text)

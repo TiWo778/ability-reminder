@@ -5,7 +5,7 @@ from .constants import DEFAULT_BASE_DIR
 
 packages = [
     "data_loading",
-    "app",
+    "gui",
     "core"
 ]
 

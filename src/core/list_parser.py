@@ -1,4 +1,5 @@
 import re
+from anyascii import anyascii
 
 from src.data_loading.services import ParsingService
 from src.classes import List, Faction
@@ -249,7 +250,12 @@ def _norm_list_text(text: str) -> str:
         "Faction Terrain",
         "Created "]
 
-    normed_text = text.replace(alt_faction_separator, field_separator)
+    # Attach unit modifiers to unit
+    normed_text = replace_bullet_points(text)
+
+    # Convert unicode symbols to closest ascii symbol
+    normed_text = anyascii(normed_text)
+    normed_text = normed_text.replace(alt_faction_separator, field_separator)
 
     # Insert newlines where missing
     for substring in insert_after_tokens:
@@ -259,9 +265,6 @@ def _norm_list_text(text: str) -> str:
 
     # Remove double spaces
     normed_text = normed_text.replace("  ", " ")
-
-    # Attach unit modifiers to unit
-    normed_text = replace_bullet_points(normed_text)
 
     return normed_text
 
