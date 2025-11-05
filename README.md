@@ -48,7 +48,7 @@ Make sure you are able to run from Source (see above).
 ```
 cd ability-reminder
 pip install pyinstaller
-pyinstaller --noconsole --onefile --name AbilityReminders --add-data=src/fonts:fonts --add-data=src/app/gui/configs:configs --paths=src main.py
+pyinstaller --noconsole --onefile --name AbilityReminders --add-data=src/fonts:fonts --add-data=src/app/gui/configs:configs --collect-all anyascii --paths=src main.py
 ````
 
 The packaged executable file can then be found at `ability-reminder/dist/AbilityReminders` 
