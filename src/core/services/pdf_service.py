@@ -1,4 +1,5 @@
 from pathlib import Path
+import re
 
 from src.constants import DEFAULT_BASE_DIR
 from src.core.pdf_generator import generate_abilities_pdf
@@ -29,8 +30,9 @@ class PDFService:
         Creates a PDF file for the army list held by the list_service
         :return: the path to the created PDF file
         """
+        invalid_chars = r'[<>:"/\\|?*\x00-\x1F]'
         army_list = self.list_service.get_list()
-        cleaned_list_name = army_list.name.replace("/", "-").replace("\\", "-").replace("|", "-")
+        cleaned_list_name = re.sub(invalid_chars, '-', army_list.name)
 
         if not self._pdf_dir:
             self._pdf_dir = DEFAULT_BASE_DIR / "pdfs"

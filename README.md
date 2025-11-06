@@ -13,10 +13,11 @@
 - **Multiple Output Modes:**  
   - Generate a formatted **PDF** with all relevant abilities sorted by phase.  
   - View and navigate abilities directly in the app. 
-  - Use the **game mode** to click through phases during a game (Perfect when trying a new army in [Tabletop Simulator](https://store.steampowered.com/app/286160/Tabletop_Simulator/).
+  - Use the **game mode** to click through phases during a game (Perfect when trying a new army in [Tabletop Simulator](https://store.steampowered.com/app/286160/Tabletop_Simulator/)).
 
 
-- **Planned for th future:**  
+- **Planned for the future:**  
+  - Proper Support for Regiments of Renown (Currently they get ignored when pasing and their abilities will not appear in the overview)
   - API for data access and custom integrations (No public hosting from me, I sadly do not have the capacity to do that).  
 
 ---
@@ -80,6 +81,7 @@ Lores
 Units
 ```
 * If you are encountering an Error when downloading data/creating PDFs, try changing the directories they get stored at via the hamburger menu
+* If you are encountering issues creating PDFs only, try removing any special characters (like stars/dashes/slashes/dots etc) from your list name
 
 ---
 

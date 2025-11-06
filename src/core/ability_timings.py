@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 
-from .constants import ALL_PHASES
+from .constants import ALL_PHASES, DEFAULT_TIMING
 from src.classes import Ability, List
 
 from src.logging_config import get_logger_for_package
@@ -68,8 +68,10 @@ def get_abilities_grouped_by_timing(army_list: List) -> dict[str, list[AbilityWi
         # Check if the ability is passive and if not search for timing in the appropriate field
         if (match := next((t for t in sorted_ability_timings if t in ability_with_source.ability.type), None)) is not None:
             timing = match.strip()
+        elif (match := next((t for t in sorted_ability_timings if t in ability_with_source.timing), None)) is not None:
+            timing = match.strip()
         else:
-            timing = next(t for t in sorted_ability_timings if t in ability_with_source.timing).strip()
+            timing = DEFAULT_TIMING
 
         sorted_ability_timings[timing].append(ability_with_source)
 

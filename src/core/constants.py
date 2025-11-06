@@ -56,3 +56,4 @@ ALL_PHASES = [
     "Any Charge Phase",
     "Any Combat Phase",
     "End of Any Turn"]
+DEFAULT_TIMING = "Reaction"

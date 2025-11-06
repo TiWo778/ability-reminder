@@ -308,7 +308,9 @@ def get_units(shared_sel_entries, shared_profiles, ns: dict[str, str]) -> list[U
             ability_cross_name = info_link.get("name")
 
             # Some universal abilities like "Beast" cannot be found in faction file. They will be ignored.
-            ability_profile = shared_profiles.xpath(f"bs:profile[@name = '{ability_cross_name}']", namespaces=ns)
+            ability_profile = None
+            if shared_profiles:
+                ability_profile = shared_profiles.xpath(f"bs:profile[@name = '{ability_cross_name}']", namespaces=ns)
             if ability_profile:
                 unit_components["abilities"].append(build_ability_from_profile(ability_profile[0], ns))
 
@@ -356,20 +358,9 @@ def get_weapon_profiles(unit_entry, ns: dict[str, str]) -> tuple[list[Weapon], l
                 additional_abilities.append(build_ability_from_profile(profile, ns))
 
             weapons_available = option.findall("bs:selectionEntries/bs:selectionEntry", namespaces=ns)
+            weapons = []
             for weapon in weapons_available:
-                weapon_profile = weapon.find("bs:profiles/bs:profile", namespaces=ns)
-                characteristics = get_characteristics_dict(weapon_profile, ns)
-                weapons.append(Weapon(
-                    non_safe_ascii_parsing(weapon_profile.get("name")),
-                    non_safe_ascii_parsing(weapon_profile.get("typeName")),
-                    non_safe_ascii_parsing(characteristics.get("Rng")),
-                    non_safe_ascii_parsing(characteristics.get("Atk")),
-                    non_safe_ascii_parsing(characteristics.get("Hit")),
-                    non_safe_ascii_parsing(characteristics.get("Wnd")),
-                    non_safe_ascii_parsing(characteristics.get("Rnd")),
-                    non_safe_ascii_parsing(characteristics.get("Dmg")),
-                    non_safe_ascii_parsing(characteristics.get("Ability")),
-                ))
+                weapons.extend(parse_weapon_entries(weapon, ns))
 
     # Remove duplicates
     weapons = list(set(weapons))
@@ -387,7 +378,14 @@ def get_characteristics_dict(profile_element, namespace):
         "./bs:characteristics/bs:characteristic",
         namespaces=namespace
     )
-    return {non_safe_ascii_parsing(c.get("name")): c.text for c in chars}
+
+    characteristics = {}
+    for c in chars:
+        name = non_safe_ascii_parsing(c.get("name"))
+        text = non_safe_ascii_parsing(get_full_text(c))
+        characteristics[name] = text
+
+    return characteristics
 
 
 def build_ability_from_profile(profile, ns: dict[str, str], cost_key=None) -> Ability:
@@ -436,3 +434,53 @@ def non_safe_ascii_parsing(text: str | None):
         return None
 
     return anyascii(text)
+
+
+def parse_weapon_entries(selection_entry, ns):
+    """
+    Recursively parses potenitally nested weapon profiles.
+    :param selection_entry: The selection entry containing the top weapon profiles
+    :param ns: the namespace to use 
+    :returns: Generator yielding weapon objects
+    """
+    for weapon in selection_entry.findall("bs:selectionEntries/bs:selectionEntry", namespaces=ns):
+        nested = weapon.findall("bs:selectionEntries/bs:selectionEntry", namespaces=ns)
+        if nested:
+            yield from parse_weapon_entries(weapon, ns)
+        else:
+            profile = weapon.find("bs:profiles/bs:profile", namespaces=ns)
+            if profile is None:
+                continue
+            ch = get_characteristics_dict(profile, ns)
+            yield Weapon(
+                non_safe_ascii_parsing(profile.get("name")),
+                non_safe_ascii_parsing(profile.get("typeName")),
+                non_safe_ascii_parsing(ch.get("Rng")),
+                non_safe_ascii_parsing(ch.get("Atk")),
+                non_safe_ascii_parsing(ch.get("Hit")),
+                non_safe_ascii_parsing(ch.get("Wnd")),
+                non_safe_ascii_parsing(ch.get("Rnd")),
+                non_safe_ascii_parsing(ch.get("Dmg")),
+                non_safe_ascii_parsing(ch.get("Ability")),
+            )
+
+
+def get_full_text(element):
+    """
+    Recursively extract all text (including tails) from an XML element
+    :param element: the xml element from which to extract the text
+    :returns: the full text for an xml element even if it is broken
+    """
+    if element is None:
+        return ""
+    
+    parts = []
+    if element.text:
+        parts.append(element.text)
+    
+    for child in element:
+        parts.append(get_full_text(child))
+        if child.tail:
+            parts.append(child.tail)
+
+    return "".join(parts).strip()
